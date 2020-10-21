@@ -73,7 +73,7 @@ class ScreamerService(
         return outbound.send(
             processor
                 .onBackpressureBuffer(
-                    10000,
+                    100000,
                     BufferOverflowStrategy.DROP_OLDEST
                 )
                 .doOnError {

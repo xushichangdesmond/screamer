@@ -118,13 +118,15 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
         }
                 .doOnError {
                     logger.error(it.message, it)
+                    state.line?.let { it.stop();it.close()}
                     GlobalScope.launch {
                         delay(3000)
                         connect(host, port).subscribe()
                     }
                 }
+                .doOnSuccess { state.line?.let { it.stop();it.close()} }
                 .then()
-                .doOnTerminate { state.line?.let { it.stop();it.close()}}
+
     }
 
     override fun close() {
