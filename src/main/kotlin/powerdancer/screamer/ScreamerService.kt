@@ -1,15 +1,15 @@
 package powerdancer.screamer
 
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.PooledByteBufAllocator
+import io.netty.buffer.UnpooledByteBufAllocator
+import io.netty.handler.logging.LogLevel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
-import reactor.core.publisher.BufferOverflowStrategy
-import reactor.core.publisher.EmitterProcessor
-import reactor.core.publisher.FluxSink
-import reactor.core.publisher.Mono
+import reactor.core.publisher.*
 import reactor.netty.NettyInbound
 import reactor.netty.NettyOutbound
 import reactor.netty.tcp.TcpServer
@@ -19,22 +19,23 @@ import java.net.InetSocketAddress
 import java.net.MulticastSocket
 import java.util.concurrent.atomic.AtomicBoolean
 
-class ScreamerReceiver(
+class ScreamerService(
     port: Int
 ): AutoCloseable {
 
     companion object {
-        val logger = LoggerFactory.getLogger(ScreamerReceiver::class.java)
+        val logger = LoggerFactory.getLogger(ScreamerService::class.java)
     }
 
     val toStop = AtomicBoolean(false)
 
-    val processor = EmitterProcessor.create<ByteBuf>(false)
+    val processor = EmitterProcessor.create<ByteBuf>(1,false)
     val processorSink = processor.sink(FluxSink.OverflowStrategy.LATEST)
 
     val server = TcpServer.create()
             .port(port)
             .handle(this::handle)
+//            .wiretap("debug", LogLevel.INFO)
             .bindNow()
 
     val screamAddress = InetSocketAddress(InetAddress.getByName("239.255.77.77"), 4010)
@@ -51,23 +52,39 @@ class ScreamerReceiver(
                     yield()
                 }
 
-                val buf = getByteBuffer()
-                val packet = DatagramPacket(buf.array(), 1157)
+                val buf = getByteBuffer().clear()
+                val packet = DatagramPacket(buf.array(), 2, 1157)
                 screamSocket.receive(packet)
-                processorSink.next(buf)
+                buf.writeShort(packet.length)
+                buf.writerIndex(2 + packet.length)
+                val downStreams = processor.downstreamCount()
+                if (downStreams > 0L) {
+                    if (downStreams > 1L)
+                        buf.retain((downStreams - 1).toInt())
+                    processorSink.next(buf)
+                } else {
+                    buf.release()
+                }
             }
         }
     }
 
     fun handle(inbound: NettyInbound, outbound: NettyOutbound): Mono<Void> {
-        return outbound.send(processor.onBackpressureBuffer(
-            10000,
-            BufferOverflowStrategy.DROP_OLDEST
-        )).then()
+        return outbound.send(
+            processor
+                .onBackpressureBuffer(
+                    10000,
+                    BufferOverflowStrategy.DROP_OLDEST
+                )
+                .doOnError {
+                    logger.error(it.message, it)
+                }
+        ).then()
     }
 
     inline fun getByteBuffer(): ByteBuf {
-        return PooledByteBufAllocator.DEFAULT.heapBuffer(3000)
+        return UnpooledByteBufAllocator.DEFAULT.heapBuffer(3000)
+//        return ByteArray(3000)
     }
 
     override fun close() {
@@ -76,4 +93,9 @@ class ScreamerReceiver(
         server.dispose()
         screamSocket.leaveGroup(screamAddress, null)
     }
+}
+
+fun main() {
+    ScreamerService(6789)
+    Thread.sleep(Long.MAX_VALUE)
 }
