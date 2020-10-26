@@ -1,5 +1,6 @@
 package powerdancer.screamer
 
+import com.xenomachina.argparser.mainBody
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.PooledByteBufAllocator
@@ -95,7 +96,7 @@ class ScreamerService(
     }
 }
 
-fun main() {
-    ScreamerService(6789)
+fun main(args:Array<String>) = mainBody {
+    ScreamerCLI().main("-lp=6789")
     Thread.sleep(Long.MAX_VALUE)
 }

@@ -1,7 +1,7 @@
 package powerdancer.screamer
 
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.PooledByteBufAllocator
+import com.xenomachina.argparser.mainBody
+import io.netty.buffer.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,14 +15,22 @@ import reactor.netty.NettyOutbound
 import reactor.netty.tcp.TcpClient
 import reactor.util.retry.Retry
 import java.lang.IllegalArgumentException
+import java.util.function.Consumer
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.Mixer
 import javax.sound.sampled.SourceDataLine
 import kotlin.experimental.and
 
-class ScreamerClient(val host: String, val port: Int): AutoCloseable {
+class ScreamerClient(val host: String, val port: Int, expectedMixerName: String?, val filters: Array<Filter>): AutoCloseable {
     companion object {
         val logger = LoggerFactory.getLogger(ScreamerClient::class.java)
+    }
+
+    val mixer: Mixer.Info? = expectedMixerName?.let { mixerName->
+        AudioSystem.getMixerInfo().firstOrNull {
+            it.name.equals(mixerName)
+        }
     }
 
     val handler = connect(host, port)
@@ -40,6 +48,10 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
 
     val runner = handler.subscribe()
 
+    init {
+        logger.info("specified mixer (null means default) - {}", mixer?.description)
+    }
+
     fun connect(host: String, port: Int): Mono<out Connection> {
         return TcpClient.create()
             .host(host)
@@ -52,10 +64,12 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
         var line: SourceDataLine? = null,
         var encodedSampleRate: Byte = 0,
         var bitSize: Byte = 0,
-        var channels: Byte = 0
+        var channels: Byte = 0,
+        var filterFunc: Consumer<ByteBuf> = Consumer{}
     )
 
     fun handle(inbound: NettyInbound, outbound: NettyOutbound): Mono<Void> {
+
         val state = State()
         return inbound.receive().reduce(state) { state, newBuffer ->
                 state.buffer.writeBytes(newBuffer)
@@ -71,13 +85,16 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
                             state.encodedSampleRate = msg[0]
                             state.bitSize = msg[1]
                             state.channels = msg[2]
+                            val built = buildFilterFunction(filters, audioFormat(
+                                decodeSampleRate(state.encodedSampleRate),
+                                state.bitSize.toInt(),
+                                state.channels.toInt()
+                            ))
+                            state.filterFunc = built.second
                             try {
                                 state.line = AudioSystem.getSourceDataLine(
-                                    audioFormat(
-                                        decodeSampleRate(state.encodedSampleRate),
-                                        state.bitSize.toInt(),
-                                        state.channels.toInt()
-                                    )
+                                    built.first,
+                                    mixer
                                 )
                                 state.line!!.open()
                                 state.line!!.start()
@@ -91,13 +108,16 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
                             state.encodedSampleRate = msg[0]
                             state.bitSize = msg[1]
                             state.channels = msg[2]
+                            val built = buildFilterFunction(filters, audioFormat(
+                                decodeSampleRate(state.encodedSampleRate),
+                                state.bitSize.toInt(),
+                                state.channels.toInt()
+                            ))
+                            state.filterFunc = built.second
                             try {
                                 state.line = AudioSystem.getSourceDataLine(
-                                    audioFormat(
-                                        decodeSampleRate(state.encodedSampleRate),
-                                        state.bitSize.toInt(),
-                                        state.channels.toInt()
-                                    )
+                                    built.first,
+                                    mixer
                                 )
                                 state.line!!.open()
                                 state.line!!.start()
@@ -106,7 +126,14 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
                                 state.line = null
                             }
                         }
-                        state.line?.let { it.write(msg, 5, msg.size - 5) }
+                        state.line?.let {
+                            with (Unpooled.wrappedBuffer(msg)
+                                .readerIndex(5)
+                                .writerIndex(msg.size)) {
+                                state.filterFunc.accept(this)
+                                it.write(msg, readerIndex(), readableBytes())
+                            }
+                        }
                         state.buffer.discardReadBytes()
                         readable = state.buffer.readableBytes()
                     } else {
@@ -129,6 +156,21 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
 
     }
 
+    private fun buildFilterFunction(filters: Array<Filter>, audioFormat: AudioFormat): Pair<AudioFormat, Consumer<ByteBuf>> {
+        var mappedAudioFormat = audioFormat
+        var filterFunc = Consumer<ByteBuf> {  }
+        filters.forEach {
+            val built = it.buildFilterFunc(
+                mappedAudioFormat
+            )
+            if (built != null) {
+                mappedAudioFormat = built.first
+                filterFunc = filterFunc.andThen(built.second)
+            }
+        }
+        return mappedAudioFormat to filterFunc
+    }
+
     override fun close() {
         runner.dispose()
     }
@@ -148,7 +190,7 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
         return (encodedSampleRate.toInt() and 0x4f) * if (encodedSampleRate.toInt() and 0x80 == 0) 48000 else 44100
     }
 
-    fun audioFormat(sampleRate: Int, bitSize: Int, channels: Int): AudioFormat? {
+    fun audioFormat(sampleRate: Int, bitSize: Int, channels: Int): AudioFormat {
         return AudioFormat(
             AudioFormat.Encoding.PCM_SIGNED,
             sampleRate.toFloat(),
@@ -164,7 +206,7 @@ class ScreamerClient(val host: String, val port: Int): AutoCloseable {
 
 }
 
-fun main() {
-    ScreamerClient("192.168.1.95", 6789)
+fun main(args:Array<String>) = mainBody {
+    ScreamerCLI().main("-th=192.168.1.95", "-tp=6789", "-f=muteLeft" )
     Thread.sleep(Long.MAX_VALUE)
 }
