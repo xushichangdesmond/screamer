@@ -207,6 +207,6 @@ class ScreamerClient(val host: String, val port: Int, expectedMixerName: String?
 }
 
 fun main(args:Array<String>) = mainBody {
-    ScreamerCLI().main("-th=192.168.1.95", "-tp=6789", "-f=muteLeft" )
+    ScreamerCLI().main("--sh=192.168.1.95", "--sp=6789", "-f=muteRight" )
     Thread.sleep(Long.MAX_VALUE)
 }

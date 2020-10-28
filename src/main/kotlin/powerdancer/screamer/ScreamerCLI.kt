@@ -8,26 +8,26 @@ import javax.sound.sampled.AudioSystem
 
 class MyArgs(parser: ArgParser) {
     val listenPort: Int? by parser.storing(
-        "-lp", "--listenPort",
+        "--lp", "--listenPort",
         help = "run service daemon and listen on specified port"
     ) {toInt()}
-        .default(null)
+        .default<Int?>(null)
 
     val sourceHost: String? by parser.storing(
-        "-sh", "--sourceHost",
+        "--sh", "--sourceHost",
         help = "stream audio from specified source host"
-    ).default(null)
+    ).default<String?>(null)
 
     val sourcePort: Int? by parser.storing(
-        "sp", "--sourcePort",
+        "--sp", "--sourcePort",
         help = "stream audio from specified port on specified host"
     ) {toInt()}
-        .default(null)
+        .default<Int?>(null)
 
     val expectedMixerName: String? by parser.storing(
         "-m", "--mixer",
         help = "name of mixer to send audio to"
-    ).default(null)
+    ).default<String?>(null)
 
     val filters by parser.adding(
         "-f", "--filter",
@@ -37,7 +37,7 @@ class MyArgs(parser: ArgParser) {
     val showMixers by parser.flagging(
         "--showMixers",
         help = "show mixes"
-    ).default(false)
+    )
 }
 
 class ScreamerCLI {
@@ -51,12 +51,11 @@ class ScreamerCLI {
             if (listenPort != null) {
                 ScreamerService(listenPort!!)
             } else if (sourceHost != null) {
-                val filterList = filters.flatMap {
-                    sequence<Filter> {
-                        if (it.equals("muteLeft")) yield(MuteChannel(0))
-                        else if (it.equals("muteRight")) yield(MuteChannel(1))
-                    }
-                }
+                val filterList = filters.map {
+                    if (it.equals("muteLeft")) (MuteChannel(0))
+                    else if (it.equals("muteRight")) (MuteChannel(1))
+                    else null
+                }.filterNotNull()
                 ScreamerClient(sourceHost!!, sourcePort!!, expectedMixerName, filterList.toTypedArray())
             }
             Unit

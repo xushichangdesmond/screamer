@@ -97,6 +97,6 @@ class ScreamerService(
 }
 
 fun main(args:Array<String>) = mainBody {
-    ScreamerCLI().main("-lp=6789")
+    ScreamerCLI().main("--lp=6789")
     Thread.sleep(Long.MAX_VALUE)
 }
