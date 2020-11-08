@@ -3,6 +3,7 @@ package powerdancer.dsp
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import powerdancer.screamer.Forker
+import powerdancer.screamer.ScreamerMulticastAudioSource
 import java.io.File
 
 class Play {
@@ -11,12 +12,13 @@ class Play {
 @ExperimentalStdlibApi
 fun main() = runBlocking{
     Processor.process(
-            AudioFileLoader(File("C:\\work\\TarsosDSP\\src\\tests\\be\\tarsos\\dsp\\test\\resources\\NR45.wav"), 256),
+//            AudioFileLoader(File("NR45.wav"), 256),
+            ScreamerMulticastAudioSource(),
             ToDSPSignalConverter(),
             Forker(
 //                arrayOf(DspImpulseLogger(LoggerFactory.getLogger("play"))),
                 arrayOf(
-                    HighPassFilter(1000f),
+                    HighPassFilter(500f),
                     FromDSPSignalConverter(16),
                     AudioPlayer(1024)
                 )
