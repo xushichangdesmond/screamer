@@ -9,7 +9,10 @@ class DspImpulseLogger(val logger: Logger): Worker {
         val originalPosition = buf.position()
 
         while(buf.hasRemaining()) {
-            logger.info("impulse ${buf.getDouble()}")
+            if (format.encoding == AudioFormat.Encoding.PCM_FLOAT)
+                logger.info("double impulse ${buf.getDouble()}")
+            else if (format.sampleSizeInBits == 16)
+                logger.info("short impulse ${buf.getShort()}")
         }
 
         buf.position(originalPosition)

@@ -62,13 +62,17 @@ class ToDSPSignalConverter: Worker {
             return currentOutputFormat!!
         } else if (format.sampleSizeInBits == 24) {
             val originalPosition = buf.position()
-            val middleGround = ByteBuffer.allocate(buf.remaining() * 4)
+            val middleGround = ByteBuffer.allocate(buf.remaining() / 3 * 8)
             middleGround.order(ByteOrder.LITTLE_ENDIAN)
             val db = middleGround.asDoubleBuffer()
             if (!format.isBigEndian) {
                 while (buf.hasRemaining()) {
-                    val impulse = (buf.get().toInt().and(0xFF)).or(buf.get().toInt().shl((8))).toShort()
-                    val converted = impulse.toDouble() / Short.MAX_VALUE
+                    var impulse = (buf.get().toInt().and(0xFF))
+                                .or(buf.get().toInt().and(0xFF).shl(8))
+                                .or(buf.get().toInt().and(0xFF).shl(16))
+                    if (impulse > 0x7FFFFF)
+                        impulse -= 0x1000000
+                    val converted = impulse.toDouble() / (0x7FFFFF).toDouble()
 //                    println("impulse $impulse, converted $converted")
                     db.put(
                         converted

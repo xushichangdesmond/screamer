@@ -8,6 +8,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.MulticastSocket
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import javax.sound.sampled.AudioFormat
 
 class ScreamerMulticastAudioSource: Worker {
@@ -28,7 +29,8 @@ class ScreamerMulticastAudioSource: Worker {
     override suspend fun apply(f: AudioFormat, buf: ByteBuffer): AudioFormat {
         val originalPosition = buf.position()
         val packet = DatagramPacket(buf.array(), buf.position(), 1157)
-
+        screamSocket.receive(packet)
+        buf.limit(buf.position() + packet.length)
         var newEncodedSampleRate = buf.get()
         var newBitSize = buf.get()
         var newChannels = buf.get()
@@ -42,6 +44,7 @@ class ScreamerMulticastAudioSource: Worker {
             bitSize = newBitSize
             channels = newChannels
             format = audioFormat(decodeSampleRate(encodedSampleRate), bitSize.toInt(), channels.toInt())
+            buf.order(ByteOrder.LITTLE_ENDIAN)
         }
 
         buf.position(originalPosition + 5)
@@ -49,7 +52,7 @@ class ScreamerMulticastAudioSource: Worker {
     }
 
     fun decodeSampleRate(encodedSampleRate: Byte): Int {
-        return (encodedSampleRate.toInt() and 0x4f) * if (encodedSampleRate.toInt() and 0x80 == 0) 48000 else 44100
+        return (encodedSampleRate.toInt() and 0x7f) * if (encodedSampleRate.toInt() and 0x80 == 0) 48000 else 44100
     }
 
     fun audioFormat(sampleRate: Int, bitSize: Int, channels: Int): AudioFormat {

@@ -15,6 +15,7 @@ class FromDSPSignalConverter(val sampleSizeInBits: Int): Worker {
 
     override suspend fun apply(format: AudioFormat, buf: ByteBuffer): AudioFormat {
         assert(!format.isBigEndian)
+        assert(buf.order() == ByteOrder.LITTLE_ENDIAN)
 
         if (!format.equals(currentInputFormat)) {
             currentInputFormat = format
