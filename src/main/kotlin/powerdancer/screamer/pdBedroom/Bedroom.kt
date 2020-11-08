@@ -7,23 +7,33 @@ import powerdancer.screamer.ScreamerMulticastAudioSource
 import powerdancer.screamer.TcpAudioSender
 
 object Bedroom {
-    fun run(): Job = Processor.process(
-        ScreamerMulticastAudioSource(),
-        ToDSPSignalConverter(),
-        Forker(
-            arrayOf(
-                Mix(
-                    doubleArrayOf(0.5, 0.5),
-                    doubleArrayOf(0.5, 0.5),
+    fun run(): Job {
+        val cb = CBarrier(2)
+        return Processor.process(
+            ScreamerMulticastAudioSource(),
+            ToDSPSignalConverter(),
+            Forker(
+                //right
+                arrayOf(
+                    Mix(
+                        doubleArrayOf(0.0, 1.0),
+                        doubleArrayOf(0.25, 0.25),
+                    ),
+                    FromDSPSignalConverter(16),
+                    cb,
+                    TcpAudioSender("192.168.1.91", 6789)
                 ),
-                FromDSPSignalConverter(24),
-                TcpAudioSender("192.168.1.91", 6789)
-            ),
-            arrayOf(
-                FromDSPSignalConverter(24),
-                TcpAudioSender("192.168.1.89", 6789)
+                //left
+                arrayOf(
+                    Mix(
+                        doubleArrayOf(1.0),
+                    ),
+                    FromDSPSignalConverter(16),
+                    cb,
+                    TcpAudioSender("192.168.1.89", 6789)
+                )
             )
-        )
 
-    )
+        )
+    }
 }

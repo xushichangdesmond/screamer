@@ -12,26 +12,31 @@ class Play {
 @ExperimentalStdlibApi
 fun main() = runBlocking{
 
-    val p1 = Processor.process(
-        TcpAudioSource(6789),
-//        DspImpulseLogger(LoggerFactory.getLogger("play")),
-        SizedBuffer(20000),
-        AudioPlayer(8192)
-    )
+
 
 //    delay(1000L)
+
+    val cb = CBarrier(2)
 
     val p2 = Processor.process(
         ScreamerMulticastAudioSource(),
         ToDSPSignalConverter(),
-//        Mix(
-//            doubleArrayOf(0.0, 0.5)
-//        ),
-        FromDSPSignalConverter(16),
-//        AudioPlayer(2048)
-        TcpAudioSender("127.0.0.1", 6789)
+        Forker(
+            arrayOf(
+                FromDSPSignalConverter(16),
+                cb,
+                DspImpulseLogger(LoggerFactory.getLogger("one"))
+            ),
+            arrayOf(
+                Mix(
+                    doubleArrayOf(0.5, 0.5)
+                ),
+                FromDSPSignalConverter(16),
+                cb,
+                DspImpulseLogger(LoggerFactory.getLogger("two"))
+            )
+        )
     )
 
-    p1.join()
     p2.join()
 }
