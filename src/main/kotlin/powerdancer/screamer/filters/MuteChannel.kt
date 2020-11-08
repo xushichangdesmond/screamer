@@ -1,7 +1,7 @@
 package powerdancer.screamer.filters
 
 import io.netty.buffer.ByteBuf
-import powerdancer.screamer.Filter
+import powerdancer.screamer.old.Filter
 import java.util.function.Consumer
 import javax.sound.sampled.AudioFormat
 

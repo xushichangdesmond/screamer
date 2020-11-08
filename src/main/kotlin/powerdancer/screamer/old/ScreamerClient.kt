@@ -1,4 +1,4 @@
-package powerdancer.screamer
+package powerdancer.screamer.old
 
 import com.xenomachina.argparser.mainBody
 import io.netty.buffer.*
@@ -20,7 +20,6 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Mixer
 import javax.sound.sampled.SourceDataLine
-import kotlin.experimental.and
 
 class ScreamerClient(val host: String, val port: Int, expectedMixerName: String?, val filters: Array<Filter>): AutoCloseable {
     companion object {

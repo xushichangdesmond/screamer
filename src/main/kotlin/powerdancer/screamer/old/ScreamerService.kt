@@ -1,11 +1,8 @@
-package powerdancer.screamer
+package powerdancer.screamer.old
 
 import com.xenomachina.argparser.mainBody
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.PooledByteBufAllocator
 import io.netty.buffer.UnpooledByteBufAllocator
-import io.netty.handler.logging.LogLevel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
