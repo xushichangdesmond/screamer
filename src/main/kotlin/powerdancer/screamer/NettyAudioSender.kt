@@ -65,7 +65,7 @@ class NettyAudioSender(val host: String, val port: Int): Worker {
                     .writeByte(channels.toInt())
                     .writeZero(2)
                     .writeBytes(msg)
-                output.send(b)
+                output.sendBlocking(b)
             }
         }
     }
@@ -79,7 +79,7 @@ class NettyAudioSender(val host: String, val port: Int): Worker {
             0,
             b.remaining()
         )
-        input.send(format to msg)
+        input.sendBlocking(format to msg)
         b.position(b.limit())
         return format
     }

@@ -3,10 +3,7 @@ package powerdancer.dsp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
-import powerdancer.screamer.Forker
-import powerdancer.screamer.NettyAudioSender
-import powerdancer.screamer.NettyAudioSource
-import powerdancer.screamer.ScreamerMulticastAudioSource
+import powerdancer.screamer.*
 import java.io.File
 
 class Play {
@@ -16,9 +13,10 @@ class Play {
 fun main() = runBlocking{
 
     val p1 = Processor.process(
-        NettyAudioSource(6789),
+        TcpAudioSource(6789),
 //        DspImpulseLogger(LoggerFactory.getLogger("play")),
-        AudioPlayer(2048)
+        SizedBuffer(20000),
+        AudioPlayer(8192)
     )
 
 //    delay(1000L)
@@ -26,10 +24,12 @@ fun main() = runBlocking{
     val p2 = Processor.process(
         ScreamerMulticastAudioSource(),
         ToDSPSignalConverter(),
-        VolumeMultiplier(0.5),
+//        Mix(
+//            doubleArrayOf(0.0, 0.5)
+//        ),
         FromDSPSignalConverter(16),
 //        AudioPlayer(2048)
-        NettyAudioSender("127.0.0.1", 6789)
+        TcpAudioSender("127.0.0.1", 6789)
     )
 
     p1.join()

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.SourceDataLine
+import kotlin.math.log
 
 class AudioPlayer(val samplesInBuffer: Int): Worker {
     companion object {

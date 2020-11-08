@@ -5,6 +5,7 @@ import io.netty.buffer.PooledByteBufAllocator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.sendBlocking
 import org.slf4j.LoggerFactory
 import powerdancer.dsp.Worker
 import reactor.core.publisher.Mono
@@ -27,12 +28,12 @@ class NettyAudioSource(val port: Int): Worker {
 //        .wiretap("source", LogLevel.INFO)
         .bindNow()
 
-    val input = Channel<ByteBuf>(2048)
-    val output = Channel<Pair<AudioFormat, ByteArray>>(2048)
+    val input = Channel<ByteBuf>()
+    val output = Channel<Pair<AudioFormat, ByteArray>>()
 
     init {
         scope.launch {
-            val buf: ByteBuf = PooledByteBufAllocator.DEFAULT.heapBuffer(3000)
+            val buf: ByteBuf = PooledByteBufAllocator.DEFAULT.heapBuffer(20000)
 
             var currentFormat: AudioFormat? = null
             var encodedSampleRate: Byte = 0
@@ -44,8 +45,11 @@ class NettyAudioSource(val port: Int): Worker {
                 it.release()
                 var readable = buf.readableBytes()
                 while (readable > 1) {
+//                    println("readable" + readable)
                     val initialReadIndex = buf.readerIndex()
+//                    println("initialReadIndex" + initialReadIndex)
                     val frameSize = buf.readShort().toInt()
+//                    println("frameSize" + frameSize)
                     if (readable >= frameSize + 2) {
                         val msg = ByteArray(frameSize)
                         buf.readBytes(msg, 0, frameSize)
@@ -63,13 +67,14 @@ class NettyAudioSource(val port: Int): Worker {
                             channels = newChannels
                             currentFormat = audioFormat(decodeSampleRate(encodedSampleRate), bitSize.toInt(), channels.toInt())
                         }
-                        output.send(currentFormat!! to msg)
+                        output.sendBlocking(currentFormat!! to msg)
                     } else {
                         buf.readerIndex(initialReadIndex)
                         return@consumeEach
                     }
                     buf.discardReadBytes()
                     readable = buf.readableBytes()
+                    if (readable < 2) return@consumeEach
                 }
             }
         }
@@ -88,7 +93,7 @@ class NettyAudioSource(val port: Int): Worker {
     fun handle(inbound: NettyInbound, outbound: NettyOutbound): Mono<Void> {
         return inbound.receive().doOnNext { newBuffer ->
             newBuffer.retain()
-            GlobalScope.launch { input.send(newBuffer) }
+            GlobalScope.launch { input.sendBlocking(newBuffer) }
         }.then()
     }
 

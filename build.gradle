@@ -34,5 +34,5 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "11"
 }
 application {
-    mainClassName = "powerdancer.dsp.PlayKt"
+    mainClassName = "powerdancer.screamer.ScreamKt"
 }

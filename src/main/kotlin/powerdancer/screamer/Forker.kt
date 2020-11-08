@@ -10,7 +10,7 @@ import javax.sound.sampled.AudioFormat
 class Forker(vararg val children: Array<Worker>): Worker {
     private val scope = CoroutineScope(Dispatchers.Default + CoroutineName("powerdancer.screamer.Forker"))
     val buffers: Array<ByteBuffer> = Array(children.size) { _->
-        ByteBuffer.allocate(1152000).order(ByteOrder.LITTLE_ENDIAN)
+        ByteBuffer.allocate(100000).order(ByteOrder.LITTLE_ENDIAN)
     }
 
     override suspend fun apply(format: AudioFormat, src: ByteBuffer): AudioFormat {
@@ -34,7 +34,9 @@ class Forker(vararg val children: Array<Worker>): Worker {
                             w.apply(f, copy)
                         }
                 copy.position(copy.limit())
-                if (copy.capacity() - copy.position() < 8192) copy.compact()
+                if (copy.capacity() - copy.position() < 32768) {
+                    copy.compact().position(0).limit(0)
+                }
             }
         }.joinAll()
 
