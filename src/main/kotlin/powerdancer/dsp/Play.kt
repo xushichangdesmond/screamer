@@ -26,7 +26,7 @@ fun main() = runBlocking{
     val p2 = Processor.process(
         ScreamerMulticastAudioSource(),
         ToDSPSignalConverter(),
-        LowPassFilter(500f),
+        VolumeMultiplier(0.5),
         FromDSPSignalConverter(16),
 //        AudioPlayer(2048)
         NettyAudioSender("127.0.0.1", 6789)
