@@ -1,8 +1,7 @@
 package powerdancer.screamer
 
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.Worker
-import powerdancer.screamer.old.ScreamerClient
+import powerdancer.dsp.old.Worker
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -34,7 +33,6 @@ class ScreamerMulticastAudioSource: Worker {
         var newEncodedSampleRate = buf.get()
         var newBitSize = buf.get()
         var newChannels = buf.get()
-
         if ((format == null) ||
                 (encodedSampleRate != newEncodedSampleRate) ||
                 (bitSize != newBitSize) ||
@@ -43,7 +41,7 @@ class ScreamerMulticastAudioSource: Worker {
             encodedSampleRate = newEncodedSampleRate
             bitSize = newBitSize
             channels = newChannels
-            format = audioFormat(decodeSampleRate(encodedSampleRate), bitSize.toInt(), channels.toInt())
+            format = audioFormat(decodeSampleRate(encodedSampleRate), bitSize.toInt(), channels.toInt(), false)
             buf.order(ByteOrder.LITTLE_ENDIAN)
         }
 
@@ -55,9 +53,9 @@ class ScreamerMulticastAudioSource: Worker {
         return (encodedSampleRate.toInt() and 0x7f) * if (encodedSampleRate.toInt() and 0x80 == 0) 48000 else 44100
     }
 
-    fun audioFormat(sampleRate: Int, bitSize: Int, channels: Int): AudioFormat {
+    fun audioFormat(sampleRate: Int, bitSize: Int, channels: Int, isFloat: Boolean): AudioFormat {
         return AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED,
+            if (isFloat) AudioFormat.Encoding.PCM_FLOAT else AudioFormat.Encoding.PCM_SIGNED,
             sampleRate.toFloat(),
             bitSize,
             channels,

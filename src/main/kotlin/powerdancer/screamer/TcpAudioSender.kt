@@ -1,26 +1,10 @@
 package powerdancer.screamer
 
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.PooledByteBufAllocator
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.channels.sendBlocking
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.reactor.asFlux
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.Worker
-import reactor.core.publisher.Mono
-import reactor.netty.NettyInbound
-import reactor.netty.NettyOutbound
-import reactor.netty.tcp.TcpClient
-import java.io.OutputStream
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import powerdancer.dsp.old.Worker
 import java.net.Socket
-import java.net.SocketAddress
 import java.nio.ByteBuffer
-import java.nio.channels.SocketChannel
 import javax.sound.sampled.AudioFormat
 
 class TcpAudioSender(val host: String, val port: Int): Worker {

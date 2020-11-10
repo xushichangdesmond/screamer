@@ -1,4 +1,4 @@
-package powerdancer.dsp
+package powerdancer.dsp.old
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -26,7 +26,7 @@ class Mix(vararg val multipliers: DoubleArray): DspWorker() {
             for (arr in multipliers) {
                 temp.putDouble(
                     arr.mapIndexed { index, d ->
-                        if (index > inChannels) 0.toDouble()
+                        if ((index > inChannels) || (index > multipliers.size)) 0.toDouble()
                         else d * impulses[index]
                     }.sum()
                 )

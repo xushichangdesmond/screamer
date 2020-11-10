@@ -7,9 +7,10 @@ import powerdancer.screamer.ScreamerMulticastAudioSource
 import powerdancer.screamer.TcpAudioSender
 import java.util.function.IntPredicate
 
-object Bedroom {
+object BedroomTheater {
     fun run(): Job {
-        val cb = CBarrier(2)
+
+        val cb = CBarrier(3)
 
         return Processor.process(
             ScreamerMulticastAudioSource(),
@@ -37,6 +38,18 @@ object Bedroom {
                     FromDSPSignalConverter(32),
                     cb,
                     TcpAudioSender("192.168.1.89", 6789)
+                ),
+                //center
+                arrayOf(
+                    Mix(
+                        doubleArrayOf(1 / (Math.sqrt(2.0)) * 0.5, 1 / (Math.sqrt(2.0)) * 0.5) // center channel mix
+                    ),
+                    FromDSPSignalConverter(16),
+                    cb,
+                    AudioPlayer(
+                        2048,
+                        "Laser Proj (NVIDIA High Definition Audio)"
+                    )
                 )
             )
 

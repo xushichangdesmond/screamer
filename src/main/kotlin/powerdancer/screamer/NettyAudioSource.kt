@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.sendBlocking
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.Worker
+import powerdancer.dsp.old.Worker
 import reactor.core.publisher.Mono
 import reactor.netty.NettyInbound
 import reactor.netty.NettyOutbound

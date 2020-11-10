@@ -1,24 +1,13 @@
 package powerdancer.screamer
 
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.PooledByteBufAllocator
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.channels.sendBlocking
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.Worker
-import reactor.core.publisher.Mono
-import reactor.netty.NettyInbound
-import reactor.netty.NettyOutbound
-import reactor.netty.tcp.TcpServer
+import powerdancer.dsp.old.Worker
+import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
-import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
 import javax.sound.sampled.AudioFormat
 
 class TcpAudioSource(val port: Int): Worker {
@@ -26,7 +15,9 @@ class TcpAudioSource(val port: Int): Worker {
         val logger = LoggerFactory.getLogger(TcpAudioSource::class.java)
     }
 
-    val serverSocket = ServerSocket()
+    val serverSocket = ServerSocket().apply {
+        bind(InetSocketAddress(InetAddress.getByName("0.0.0.0"), port))
+    }
     var socket: Socket? =  null
 
     val buf: ByteBuffer = ByteBuffer.allocate(3000).limit(0)
@@ -79,7 +70,7 @@ class TcpAudioSource(val port: Int): Worker {
             }
         } else {
             buf.compact()
-            val read = socket().getInputStream().read(buf.array(), buf.position(), buf.capacity() - buf.position())
+            val read = read(buf.array(), buf.position(), buf.capacity() - buf.position())
             buf.limit(buf.position() + read).position(0)
         }
         return currentFormat
@@ -105,11 +96,25 @@ class TcpAudioSource(val port: Int): Worker {
 
     fun socket(): Socket {
         if (socket == null) {
-            serverSocket.bind(InetSocketAddress(InetAddress.getByName("0.0.0.0"), port))
             socket = serverSocket.accept()
         }
         return socket!!
     }
+
+    private fun read(
+        dest: ByteArray,
+        offset: Int,
+        length: Int
+    ): Int {
+        return try {
+            socket().getInputStream().read(dest, offset, length)
+        } catch(e: IOException) {
+            runCatching { socket!!.close() }
+            socket = null
+            0
+        }
+    }
+
     override fun close() {
         socket?.let {
             it.close()

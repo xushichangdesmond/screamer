@@ -2,12 +2,13 @@ package powerdancer.screamer
 
 
 import kotlinx.coroutines.*
-import powerdancer.dsp.Worker
+import powerdancer.dsp.old.Worker
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.sound.sampled.AudioFormat
 
-class Forker(vararg val children: Array<Worker>): Worker {
+class Forker(vararg val children: Array<Worker>):
+    Worker {
     private val scope = CoroutineScope(Dispatchers.Default + CoroutineName("powerdancer.screamer.Forker"))
     val buffers: Array<ByteBuffer> = Array(children.size) { _->
         ByteBuffer.allocate(100000).order(ByteOrder.LITTLE_ENDIAN)

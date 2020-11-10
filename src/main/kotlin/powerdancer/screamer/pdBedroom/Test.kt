@@ -1,37 +1,42 @@
 package powerdancer.screamer.pdBedroom
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import powerdancer.dsp.FromDSPSignalConverter
-import powerdancer.dsp.Mix
-import powerdancer.dsp.Processor
-import powerdancer.dsp.ToDSPSignalConverter
+import powerdancer.dsp.old.*
 import powerdancer.screamer.Forker
-import powerdancer.screamer.ScreamReceiver
 import powerdancer.screamer.ScreamerMulticastAudioSource
-import powerdancer.screamer.TcpAudioSender
 
 object Test {
-    fun run(): Job = GlobalScope.launch {
-        val p1 = ScreamReceiver.run()
+    fun run(): Job {
+        val cb = CBarrier(2)
 
-        val p2 = Processor.process(
+        return Processor.process(
             ScreamerMulticastAudioSource(),
             ToDSPSignalConverter(),
+            VolumeMultiplier(0.6),
             Forker(
+                //right
                 arrayOf(
                     Mix(
-                        doubleArrayOf(0.5, 0.5),
-                        doubleArrayOf(0.5, 0.5),
+                        doubleArrayOf(-1.0, 1.0), // right channel to right speaker
+                        doubleArrayOf(1.0, -1.0), // left channel to left speaker
+//                        doubleArrayOf(1.0),
+//                        doubleArrayOf(0.0,1.0)
                     ),
+//                    DspImpulseLogger(LoggerFactory.getLogger("a")),
                     FromDSPSignalConverter(16),
-                    TcpAudioSender("127.0.0.1", 6789)
-                )
+                    AudioPlayer(2048)
+                ),
+                //left
+//                arrayOf(
+//                    Mix(
+//
+//                    ),
+//                    FromDSPSignalConverter(32),
+//                    cb,
+//                    TcpAudioSender("192.168.1.89", 6789)
+//                )
             )
         )
-        p1.join()
-        p2.join()
     }
 
 
