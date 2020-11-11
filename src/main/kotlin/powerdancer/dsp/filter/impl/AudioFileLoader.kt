@@ -1,6 +1,7 @@
 package powerdancer.dsp.filter.impl
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import powerdancer.dsp.ObjectPool
@@ -29,17 +30,21 @@ class AudioFileLoader(file: File, samplesPerIteration: Int = 200): AbstractFilte
     override suspend fun onBump(): Flow<Event> {
         val buf = bufferPool.take().clear()
 
-        val read = input.read(buf.array())
-        if (read == -1) {
-            onClose()
-            return flowOf(Close)
-        }
-        buf.limit(read)
-
-        return flowOf(PcmData(buf))
-            .onCompletion {
-                bufferPool.put(buf)
+        return flow {
+            val read = input.read(buf.array())
+            if (read == -1) {
+                onClose()
+                emit(Close)
+                return@flow
             }
+            buf.limit(read)
+
+            emit(PcmData(buf))
+
+        }.onCompletion {
+            bufferPool.put(buf)
+        }
+
     }
 
     override suspend fun onClose(): Flow<Event> {

@@ -3,15 +3,14 @@ package powerdancer.screamer.pdBedroom
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import powerdancer.dsp.*
-import powerdancer.dsp.filter.impl.AudioFileLoader
 import powerdancer.dsp.filter.impl.AudioPlayer
-import java.io.File
+import powerdancer.screamer.ScreamMulticastAudioReceiver
 
 object Test {
     fun run(): Job {
         return Processor.process(
             Channel(),
-            AudioFileLoader(File("try.wav")),
+            ScreamMulticastAudioReceiver(),
             AudioPlayer(2048)
         )
     }
