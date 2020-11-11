@@ -1,7 +1,6 @@
 package powerdancer.dsp.filter.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -13,7 +12,7 @@ import java.nio.ByteBuffer
 import java.nio.DoubleBuffer
 import javax.sound.sampled.AudioFormat
 
-class DspImpulseLogger(val logger: Logger = LoggerFactory.getLogger(DspImpulseLogger::class.java)): AbstractFilter() {
+class ImpulseLogger(val logger: Logger = LoggerFactory.getLogger(ImpulseLogger::class.java)): AbstractFilter() {
 
     lateinit var format: AudioFormat
 
