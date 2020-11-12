@@ -16,7 +16,7 @@ import java.nio.ByteOrder
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 
-class AudioFileLoader(file: File, samplesPerIteration: Int = 200): AbstractFilter() {
+class AudioFileLoader(file: File, samplesPerIteration: Int = 500): AbstractFilter() {
 
     val input: AudioInputStream = AudioSystem.getAudioInputStream(file)
     val bufferPool = ObjectPool<ByteBuffer>(50) {

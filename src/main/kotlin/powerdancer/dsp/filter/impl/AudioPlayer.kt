@@ -33,8 +33,10 @@ class AudioPlayer(val samplesInBuffer: Int, mixerName: String? = null): Abstract
         output.write(data.array(), data.position(), data.remaining())
     }
 
-    override suspend fun onClose() = runCatching {
-        output.stop()
-        output.close()
+    override suspend fun onClose() {
+        runCatching {
+            output.stop()
+            output.close()
+        }
     }
 }

@@ -22,7 +22,7 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
         val logger = LoggerFactory.getLogger(FromFloat64Converter::class.java)
     }
 
-    val bufferPool = ObjectPool<ByteBuffer>() { ByteBuffer.allocate(1000).order(ByteOrder.LITTLE_ENDIAN) }
+    val bufferPool = ObjectPool<ByteBuffer> { ByteBuffer.allocate(10000).order(ByteOrder.LITTLE_ENDIAN) }
     val writeSample: (Double, ByteBuffer)->Unit = when(sampleSizeInBytes) {
         2-> this::write16BitSample
         else-> throw IllegalArgumentException("sample size of $sampleSizeInBytes  bytes is not supported")

@@ -12,6 +12,7 @@ object Test {
             Channel(),
             ScreamMulticastAudioReceiver(),
             ToFloat64Converter(),
+//            LowPassFilter(400) {it == 1 || it ==0},
             FromFloat64Converter(2),
             AudioPlayer(2048)
         )
