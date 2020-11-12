@@ -12,10 +12,7 @@ object Test {
             Channel(),
             ScreamMulticastAudioReceiver(),
             ToFloat64Converter(),
-            Mix(
-                doubleArrayOf(0.0),
-                doubleArrayOf(0.0, 0.0)
-            ),
+            VolumeMultiplier(0.1),
             FromFloat64Converter(2),
             AudioPlayer(2048)
         )
