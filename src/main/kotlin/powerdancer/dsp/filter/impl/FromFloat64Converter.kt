@@ -28,7 +28,6 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
         else-> throw IllegalArgumentException("sample size of $sampleSizeInBytes  bytes is not supported")
     }
 
-
     override suspend fun onFormatChange(format: AudioFormat): Flow<Event> = flowOf(
         FormatChange(AudioFormat(
             AudioFormat.Encoding.PCM_SIGNED,

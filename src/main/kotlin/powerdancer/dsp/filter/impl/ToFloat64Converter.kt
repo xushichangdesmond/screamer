@@ -21,7 +21,7 @@ class ToFloat64Converter: AbstractFilter() {
         val logger = LoggerFactory.getLogger(ToFloat64Converter::class.java)
     }
 
-    val bufferPool = ObjectPool<DoubleBuffer>() { DoubleBuffer.allocate(2000) }
+    val bufferPool = ObjectPool<DoubleBuffer> { DoubleBuffer.allocate(2000) }
     lateinit var format: AudioFormat
     lateinit var readSample: (ByteBuffer)->Double
 

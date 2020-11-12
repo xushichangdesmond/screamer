@@ -19,33 +19,28 @@ import javax.sound.sampled.AudioSystem
 class AudioFileLoader(file: File, samplesPerIteration: Int = 500): AbstractFilter() {
 
     val input: AudioInputStream = AudioSystem.getAudioInputStream(file)
-    val bufferPool = ObjectPool<ByteBuffer>(50) {
+    val buf =
         ByteBuffer
             .allocate(samplesPerIteration * input.format.channels * ((input.format.sampleSizeInBits + 7)/8))
             .order(if (input.format.isBigEndian) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN)
-    }
+
 
     override suspend fun onInit(): Flow<Event> = flowOf(FormatChange(input.format))
 
-    override suspend fun onBump(): Flow<Event> {
-        val buf = bufferPool.take().clear()
-
-        return flow {
-            val read = input.read(buf.array())
-            if (read == -1) {
-                onClose()
-                emit(Close)
-                return@flow
-            }
-            buf.limit(read)
-
-            emit(PcmData(buf))
-
-        }.onCompletion {
-            bufferPool.put(buf)
+    override suspend fun onBump(): Flow<Event> = flow {
+        buf.clear()
+        val read = input.read(buf.array())
+        if (read == -1) {
+            onClose()
+            emit(Close)
+            return@flow
         }
+        buf.limit(read)
+
+        emit(PcmData(buf))
 
     }
+
 
     override suspend fun onClose(): Flow<Event> {
         kotlin.runCatching { input.close() }

@@ -26,51 +26,44 @@ class ScreamMulticastAudioReceiver: AbstractFilter() {
         }
     }
 
-    val bufferPool = ObjectPool<ByteBuffer>(50) {
-        ByteBuffer.allocate(1157).order(ByteOrder.LITTLE_ENDIAN)
-    }
+    val buf = ByteBuffer.allocate(1157).order(ByteOrder.LITTLE_ENDIAN)
     var encodedSampleRate: Byte = 0
     var bitSize: Byte = 0
     var channels: Byte = 0
     lateinit var format: AudioFormat
 
-    override suspend fun onBump(): Flow<Event> {
-        val buf = bufferPool.take().clear()
+    override suspend fun onBump(): Flow<Event> = flow {
 
-        return flow {
+        buf.clear()
+        
+        val packet = DatagramPacket(buf.array(), 1157)
+        screamSocket.receive(packet)
+        buf.limit(packet.length)
 
-            val packet = DatagramPacket(buf.array(), 1157)
-            screamSocket.receive(packet)
-            buf.limit(packet.length)
-
-            var newEncodedSampleRate = buf.get()
-            var newBitSize = buf.get()
-            var newChannels = buf.get()
-            buf.get()
-            buf.get()
-            if (
-                (encodedSampleRate != newEncodedSampleRate) ||
-                (bitSize != newBitSize) ||
-                (channels != newChannels)
-            ) {
-                encodedSampleRate = newEncodedSampleRate
-                bitSize = newBitSize
-                channels = newChannels
-                emit(
-                    FormatChange(
-                        ScreamUtils.audioFormat(
-                            ScreamUtils.decodeSampleRate(encodedSampleRate),
-                            bitSize.toInt(),
-                            channels.toInt()
-                        )
+        var newEncodedSampleRate = buf.get()
+        var newBitSize = buf.get()
+        var newChannels = buf.get()
+        buf.get()
+        buf.get()
+        if (
+            (encodedSampleRate != newEncodedSampleRate) ||
+            (bitSize != newBitSize) ||
+            (channels != newChannels)
+        ) {
+            encodedSampleRate = newEncodedSampleRate
+            bitSize = newBitSize
+            channels = newChannels
+            emit(
+                FormatChange(
+                    ScreamUtils.audioFormat(
+                        ScreamUtils.decodeSampleRate(encodedSampleRate),
+                        bitSize.toInt(),
+                        channels.toInt()
                     )
                 )
-            }
-            emit(PcmData(buf))
+            )
         }
-            .onCompletion {
-                bufferPool.put(buf)
-            }
+        emit(PcmData(buf))
     }
 
 }

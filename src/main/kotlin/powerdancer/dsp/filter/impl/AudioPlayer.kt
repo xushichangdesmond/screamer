@@ -1,5 +1,6 @@
 package powerdancer.dsp.filter.impl
 
+import kotlinx.coroutines.channels.Channel
 import org.slf4j.LoggerFactory
 import powerdancer.dsp.filter.AbstractTerminalFilter
 import java.nio.ByteBuffer
