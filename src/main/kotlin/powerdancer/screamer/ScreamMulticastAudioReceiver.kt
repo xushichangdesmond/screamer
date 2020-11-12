@@ -30,7 +30,6 @@ class ScreamMulticastAudioReceiver: AbstractFilter() {
     var encodedSampleRate: Byte = 0
     var bitSize: Byte = 0
     var channels: Byte = 0
-    lateinit var format: AudioFormat
 
     override suspend fun onBump(): Flow<Event> = flow {
 
