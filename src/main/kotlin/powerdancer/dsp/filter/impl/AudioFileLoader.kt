@@ -48,7 +48,7 @@ class AudioFileLoader(file: File, samplesPerIteration: Int = 200): AbstractFilte
     }
 
     override suspend fun onClose(): Flow<Event> {
-        input.close()
+        kotlin.runCatching { input.close() }
         return flowOf(Close)
     }
 }

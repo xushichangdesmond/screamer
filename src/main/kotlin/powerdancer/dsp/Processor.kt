@@ -22,6 +22,7 @@ object Processor {
                 while(true) {
                     emit(eventChannel.poll() ?: Bump)
                 }
+                emit(Close)
             }
         ) { accumulatedFlow: Flow<Event>, filter: Filter ->
             accumulatedFlow.flatMapConcat { event->

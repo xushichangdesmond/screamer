@@ -3,7 +3,7 @@ package powerdancer.dsp
 import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.atomic.AtomicInteger
 
-class ObjectPool<T>(maxInstances: Int = 100, val createFunc: ()->T) {
+class ObjectPool<T>(maxInstances: Int = Integer.MAX_VALUE, val createFunc: ()->T) {
     private val limiter = AtomicInteger(maxInstances) // once countdown to zero, no more creating of instances
     private val pool = Channel<T>(maxInstances)
 
