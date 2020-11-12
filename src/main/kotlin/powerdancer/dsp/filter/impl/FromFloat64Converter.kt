@@ -5,13 +5,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.ObjectPool
 import powerdancer.dsp.event.Event
 import powerdancer.dsp.event.FormatChange
 import powerdancer.dsp.event.PcmData
 import powerdancer.dsp.filter.AbstractFilter
 import java.lang.IllegalArgumentException
-import java.nio.BufferOverflowException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.DoubleBuffer
@@ -22,7 +20,6 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
         val logger = LoggerFactory.getLogger(FromFloat64Converter::class.java)
     }
 
-    val bufferPool = ObjectPool<ByteBuffer> { ByteBuffer.allocate(10000).order(ByteOrder.LITTLE_ENDIAN) }
     val writeSample: (Double, ByteBuffer)->Unit = when(sampleSizeInBytes) {
         2-> this::write16BitSample
         else-> throw IllegalArgumentException("sample size of $sampleSizeInBytes  bytes is not supported")
@@ -41,12 +38,10 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
     )
 
     override suspend fun onFloat64PcmData(data: Array<DoubleBuffer>): Flow<Event> {
-        val output = with(bufferPool.take().clear()) {
-            if (capacity() < data.size * data[0].remaining() * sampleSizeInBytes) {
-                ByteBuffer.allocate(data.size * data[0].remaining() * sampleSizeInBytes * 1.5.toInt())
-                    .order(ByteOrder.LITTLE_ENDIAN)
-            } else this
-        }
+        val output = PcmData
+            .takeBufferFromPool(data.size * data[0].remaining() * sampleSizeInBytes)
+            .clear()
+            .order(ByteOrder.LITTLE_ENDIAN)
 
         return flow {
             for (j in 0 until data[0].remaining()) {
@@ -57,7 +52,7 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
             emit(PcmData(output.flip()))
 
         }.onCompletion {
-            bufferPool.put(output)
+            PcmData.putBufferIntoPool(output)
         }
     }
 

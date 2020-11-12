@@ -5,14 +5,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import org.slf4j.LoggerFactory
-import powerdancer.dsp.ObjectPool
 import powerdancer.dsp.event.Event
 import powerdancer.dsp.event.Float64PcmData
 import powerdancer.dsp.event.FormatChange
-import powerdancer.dsp.event.PcmData
 import powerdancer.dsp.filter.AbstractFilter
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.DoubleBuffer
 import javax.sound.sampled.AudioFormat
 
@@ -21,7 +18,6 @@ class ToFloat64Converter: AbstractFilter() {
         val logger = LoggerFactory.getLogger(ToFloat64Converter::class.java)
     }
 
-    val bufferPool = ObjectPool<DoubleBuffer> { DoubleBuffer.allocate(2000) }
     lateinit var format: AudioFormat
     lateinit var readSample: (ByteBuffer)->Double
 
@@ -48,13 +44,9 @@ class ToFloat64Converter: AbstractFilter() {
 
     override suspend fun onPcmData(data: ByteBuffer): Flow<Event> {
         val output = Array<DoubleBuffer>(format.channels) {
-            bufferPool.take()
-        }
-        val requiredSizePerOutputBuffer = data.remaining() * 8 / format.sampleSizeInBits / format.channels
-        output.forEachIndexed { i, b ->
-            if (b.capacity() < requiredSizePerOutputBuffer) {
-                output[i] = DoubleBuffer.allocate(requiredSizePerOutputBuffer * 1.5.toInt())
-            }
+            Float64PcmData
+                .takeBufferFromPool(data.remaining() * 8 / format.sampleSizeInBits / format.channels)
+                .clear()
         }
 
         return flow {
@@ -67,7 +59,7 @@ class ToFloat64Converter: AbstractFilter() {
             output.forEach { it.flip() }
             emit(Float64PcmData(output))
         }.onCompletion {
-            output.forEach { bufferPool::put }
+            output.forEach { Float64PcmData.putBufferIntoPool(it) }
         }
     }
 
