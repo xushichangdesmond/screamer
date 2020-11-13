@@ -22,6 +22,8 @@ class FromFloat64Converter(val sampleSizeInBytes: Int): AbstractFilter() {
 
     val writeSample: (Double, ByteBuffer)->Unit = when(sampleSizeInBytes) {
         2-> this::write16BitSample
+        3-> this::write24BitSample
+        4-> this::write32BitSample
         else-> throw IllegalArgumentException("sample size of $sampleSizeInBytes  bytes is not supported")
     }
 

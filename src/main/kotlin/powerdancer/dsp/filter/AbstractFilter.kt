@@ -17,9 +17,12 @@ abstract class AbstractFilter: Filter {
             is PcmData -> onPcmData(event.data)
             is Float64PcmData -> onFloat64PcmData(event.data)
             is Close -> onClose()
+            is ConfigPush -> onConfigPush(event.key, event.value)
             else -> onElse(event)
         }
     }
+
+    open suspend fun onConfigPush(key: String, value: String): Flow<Event> = flowOf(ConfigPush(key, value))
 
     open suspend fun onElse(event: Event): Flow<Event> = flowOf(event)
 

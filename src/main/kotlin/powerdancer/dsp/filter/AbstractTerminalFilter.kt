@@ -3,6 +3,7 @@ package powerdancer.dsp.filter
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import powerdancer.dsp.event.*
 import java.nio.ByteBuffer
 import java.nio.DoubleBuffer
@@ -21,10 +22,13 @@ abstract class AbstractTerminalFilter: Filter {
                 onClose()
                 coroutineContext.cancel()
             }
+            is ConfigPush -> onConfigPush(event.key, event.value)
             else -> onElse(event)
         }
         return emptyFlow()
     }
+
+    open suspend fun onConfigPush(key: String, value: String) = Unit
 
     open suspend fun onElse(event: Event) = Unit
 

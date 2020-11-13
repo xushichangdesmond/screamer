@@ -1,6 +1,8 @@
 package powerdancer.screamer
 
 import kotlinx.coroutines.runBlocking
+import powerdancer.screamer.pdBedroom.BedroomTheater
+import powerdancer.screamer.pdBedroom.Karaoke
 import powerdancer.screamer.pdBedroom.Test
 
 class Scream {
@@ -9,5 +11,7 @@ class Scream {
 fun main(args:Array<String>) = runBlocking{
     when(args[0]) {
         "test" -> Test.run().join()
+        "bedroom" -> BedroomTheater.run().join()
+        "karaoke" -> Karaoke.run().join()
     }
 }
