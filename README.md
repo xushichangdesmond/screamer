@@ -33,7 +33,12 @@ Channel mixing is an important feature, since the author has a 3.1 setup, where 
 ```
 
 # Usage
-For now, you need to compile and run this on your own. The project is written using kotlin, and here is the example to run the receiver
+To run the scream receiver and play the audio out directly on the system's audio device,
+you simply need to download the binary release and run the executable with no arguments.
+
+To use TCP streaming or DSP or reun the http APIs, you need to compile and and it for now since
+there is no support for configuration files yet.
+The project is written using kotlin, and here is the example to run a TCP receiver
 ```
 import kotlinx.coroutines.Job
 import powerdancer.dsp.Processor
@@ -49,13 +54,13 @@ object BedroomReceiver {
             ConfigurationFilter(),        // this listens to http requests to control playback and volume
             TcpAudioReceiver(),           // receive audio by listening to TCP on default port 6789
             AlsaMixerVolumeControl("'DAC'"),      // allows configuring of system'level ALSA volume via the control name 'DAC' (this is optional of course)
-            AudioPlayer(2048)             // plays audio out on this system via the system's soundcard with a buffer size of 2048 bytes (higher buffer means higher latency, but from experience even a few milliseconds is enough which wont be noticed even when watching videos)
+            AudioPlayer(2048)             // plays audio out on this system via the system's soundcard with a buffer size of 2048 samples (higher buffer means higher latency, but from experience even a few milliseconds is enough which wont be noticed even when watching videos)
         )
     }
 }
 ```
 
-The point of this project is to enable flexibility in the actual audio setup, so there is no one single way to configure the sender, but here is an example, based on the author's own bedroom surround setup
+And here is an example of a sender that does DSP as well, based on the author's own bedroom surround setup
 ```
 import kotlinx.coroutines.Job
 import powerdancer.dsp.Processor
