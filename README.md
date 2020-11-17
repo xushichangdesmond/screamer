@@ -1,11 +1,14 @@
 # screamer
-THe primary use case and motivation behind this project is for the author to stream his window's machine's audio (be it youtube/netflix or any other audio output on Windows) over local network to his DIY smart speakers and subwoofer, and performing DSP (digital signal processing) as well. Other primary requirements are real-time and high resolution for the audio stream since it has to be synchronized with the on-screen video feed for a good experience.
+Java/kotlin receiver for  https://github.com/duncanthrax/scream
+
+The primary use case and motivation behind this project is for the author to stream his window's machine's audio (be it youtube/netflix or any other audio output on Windows) over local network to his DIY smart speakers and subwoofer, and performing DSP (digital signal processing) as well. Other primary requirements are real-time and high resolution for the audio stream since it has to be synchronized with the on-screen video feed for a good experience.
 
 To capture the audio output on the windows machine for streaming, installing the windows driver from https://github.com/duncanthrax/scream will be required.
 
-Whereas https://github.com/duncanthrax/scream also provides their own receivers that get the audio data via UDP multicasting, this project uses TCP instead to stream the audio data data to the receivers because the UDP multicasting transport proved to be to unreliable even in the author's own local network.
+Whereas https://github.com/duncanthrax/scream also provides their own receivers that get the audio data via UDP multicasting, this project also provides additional option to use TCP instead to stream the audio data data to the receivers because the UDP multicasting transport proved to be to unreliable even in the author's own local network.
 
 # Features
+- Receive scream audio data via UDP multicast
 - TCP realtime lossless streaming of multichannel audio content
 - Receivers listen on a TCP port and output the audio on their local sound device
 - The audio source inititates TCP connections to the receivers to send the audio data
