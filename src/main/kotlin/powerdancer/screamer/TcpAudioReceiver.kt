@@ -15,9 +15,10 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import javax.sound.sampled.AudioFormat
 
-class TcpAudioReceiver(val port: Int): AbstractFilter() {
+class TcpAudioReceiver(val port: Int = 6789): AbstractFilter() {
     companion object {
         val logger = LoggerFactory.getLogger(TcpAudioReceiver::class.java)
     }
@@ -28,6 +29,7 @@ class TcpAudioReceiver(val port: Int): AbstractFilter() {
     var socket: Socket? =  null
 
     val buf: ByteBuffer = ByteBuffer.allocate(3000).limit(0)
+        .order(ByteOrder.LITTLE_ENDIAN)
 
     var encodedSampleRate: Byte = 0
     var bitSize: Byte = 0
@@ -36,7 +38,7 @@ class TcpAudioReceiver(val port: Int): AbstractFilter() {
     override suspend fun onBump(): Flow<Event> = flow {
         if (buf.remaining() > 1) {
             val initialReadIndex = buf.position()
-            val frameSize = buf.getShort()
+            val frameSize = buf.get().toInt().and(0xff).shl(8).or(buf.get().toInt().and(0xff))
             if (buf.remaining() >= frameSize) {
                 var newEncodedSampleRate = buf.get()
                 var newBitSize = buf.get()
@@ -56,7 +58,9 @@ class TcpAudioReceiver(val port: Int): AbstractFilter() {
                         ScreamUtils.audioFormat(ScreamUtils.decodeSampleRate(encodedSampleRate), bitSize.toInt(), channels.toInt())
                     ))
                 }
-                emit(PcmData(buf.slice(buf.position(), frameSize - 5)))
+                emit(PcmData(
+                    buf.slice().order(ByteOrder.LITTLE_ENDIAN).limit(frameSize - 5)
+                ))
                 buf.position(buf.position() + frameSize - 5)
                 buf.compact()
                     .limit(buf.position())

@@ -15,9 +15,16 @@ import powerdancer.dsp.event.ConfigPush
 import powerdancer.dsp.event.Event
 import powerdancer.dsp.event.Init
 import powerdancer.dsp.filter.Filter
+import java.net.URI
+import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 
-class ConfigurationFilter(val port: Int = 6788): Filter {
+class ConfigurationFilter(val port: Int = 6788, vararg val repeatTo: String): Filter {
     val pending = Channel<ConfigPush>(10)
+    val c = HttpClient.newHttpClient()
 
     lateinit var server: NettyApplicationEngine
 
@@ -35,6 +42,17 @@ class ConfigurationFilter(val port: Int = 6788): Filter {
                             call.request.queryParameters.flattenForEach { k, v ->
                                 CoroutineScope(coroutineContext).launch {
                                     pending.send(ConfigPush(k, v))
+                                    repeatTo.forEach {
+                                        launch {
+                                            c.send(
+                                                HttpRequest.newBuilder()
+                                                    .uri(URI(it + "?$k=$v"))
+                                                    .POST(HttpRequest.BodyPublishers.noBody())
+                                                    .build(),
+                                                HttpResponse.BodyHandlers.discarding()
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -48,5 +66,4 @@ class ConfigurationFilter(val port: Int = 6788): Filter {
         emit(event)
 
     }
-
 }

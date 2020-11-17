@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sound.sampled.AudioFormat
 import kotlin.coroutines.coroutineContext
 
-class TcpAudioSender(val host: String, val port: Int): AbstractTerminalFilter() {
+class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFilter() {
     companion object {
         val logger = LoggerFactory.getLogger(TcpAudioSender::class.java)
     }

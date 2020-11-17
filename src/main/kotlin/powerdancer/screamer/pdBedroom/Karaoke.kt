@@ -1,18 +1,15 @@
 package powerdancer.screamer.pdBedroom
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import powerdancer.dsp.Processor
 import powerdancer.dsp.filter.impl.*
 import powerdancer.screamer.*
-import java.util.function.IntPredicate
 
 object Karaoke {
     fun run(): Job {
 
         return Processor.process(
-            Channel(),
-            ConfigurationFilter(),
+            ConfigurationFilter(repeatTo = arrayOf("http://192.168.1.91:6788/", "http://192.168.1.89:6788/")),
             ScreamMulticastAudioReceiver(),
             ToFloat64Converter(),
             Forker(

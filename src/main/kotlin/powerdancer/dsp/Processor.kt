@@ -15,12 +15,12 @@ object Processor {
     val logger = LoggerFactory.getLogger(Processor::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + CoroutineName("powerdancer.dsp.Processor"))
 
-    fun process(eventChannel: ReceiveChannel<Event>, vararg filters: Filter) = scope.launch {
+    fun process(vararg filters: Filter) = scope.launch {
         filters.asFlow().fold(
             flow<Event> {
                 emit(Init)
                 while(true) {
-                    emit(eventChannel.poll() ?: Bump)
+                    emit(Bump)
                 }
             }
         ) { accumulatedFlow: Flow<Event>, filter: Filter ->

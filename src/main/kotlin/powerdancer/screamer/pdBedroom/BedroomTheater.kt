@@ -1,7 +1,6 @@
 package powerdancer.screamer.pdBedroom
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import powerdancer.dsp.Processor
 import powerdancer.dsp.filter.impl.*
 import powerdancer.screamer.ScreamMulticastAudioReceiver
@@ -12,8 +11,9 @@ object BedroomTheater {
     fun run(): Job {
 
         return Processor.process(
-            Channel(),
-            ConfigurationFilter(),
+            ConfigurationFilter(
+                repeatTo = arrayOf("http://192.168.1.91:6788/", "http://192.168.1.89:6788/")
+            ),
             ScreamMulticastAudioReceiver(),
             ToFloat64Converter(),
             Forker(
@@ -27,7 +27,7 @@ object BedroomTheater {
                     HighPassFilter(125, IntPredicate { i -> i == 0 }),
                     VolumeMultiplier(doubleArrayOf(0.05, 0.4)),
                     FromFloat64Converter(4),
-                    TcpAudioSender("192.168.1.91", 6789)
+                    TcpAudioSender("192.168.1.91")
                 ),
                 //left
                 arrayOf(
@@ -37,7 +37,7 @@ object BedroomTheater {
                     HighPassFilter(125),
                     VolumeMultiplier(doubleArrayOf(0.05)),
                     FromFloat64Converter(4),
-                    TcpAudioSender("192.168.1.89", 6789)
+                    TcpAudioSender("192.168.1.89")
                 ),
                 //center
                 arrayOf(
