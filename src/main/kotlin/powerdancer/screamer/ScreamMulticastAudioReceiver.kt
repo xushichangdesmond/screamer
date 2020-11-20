@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import org.slf4j.LoggerFactory
 import powerdancer.dsp.ObjectPool
+import powerdancer.dsp.event.Bump
 import powerdancer.dsp.event.Event
 import powerdancer.dsp.event.FormatChange
 import powerdancer.dsp.event.PcmData
@@ -63,6 +64,7 @@ class ScreamMulticastAudioReceiver: AbstractFilter() {
             )
         }
         emit(PcmData(buf))
+        emit(Bump)
     }
 
 }

@@ -27,12 +27,10 @@ data class Float64PcmData(
 
     override suspend fun clone(): Pair<Event, suspend () -> Unit> {
         val output = Array<DoubleBuffer>(data.size) { i->
-            data[i].mark()
             val copy = takeBufferFromPool(data[i].remaining())
                 .clear()
-                .put(data[i])
+                .put(data[i].array(), data[i].position() + data[i].arrayOffset(), data[i].remaining())
                 .flip()
-            data[i].reset()
             copy
         }
         return Float64PcmData(output) to {
