@@ -10,10 +10,7 @@ import powerdancer.dsp.event.Event
 import powerdancer.dsp.event.FormatChange
 import powerdancer.dsp.event.PcmData
 import powerdancer.dsp.filter.AbstractFilter
-import java.net.DatagramPacket
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.MulticastSocket
+import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.sound.sampled.AudioFormat
@@ -23,6 +20,7 @@ class ScreamMulticastAudioReceiver: AbstractFilter() {
         val logger = LoggerFactory.getLogger(ScreamMulticastAudioReceiver::class.java)
         val screamAddress = InetSocketAddress(InetAddress.getByName("239.255.77.77"), 4010)
         val screamSocket = MulticastSocket(4010).apply {
+            setSoTimeout(100)
             joinGroup(screamAddress, null)
         }
     }
@@ -37,7 +35,10 @@ class ScreamMulticastAudioReceiver: AbstractFilter() {
         buf.clear()
         
         val packet = DatagramPacket(buf.array(), 1157)
-        screamSocket.receive(packet)
+        try { screamSocket.receive(packet) }
+        catch (e: SocketTimeoutException) {
+            return@flow
+        }
         buf.limit(packet.length)
 
         var newEncodedSampleRate = buf.get()

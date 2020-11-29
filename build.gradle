@@ -7,7 +7,7 @@ plugins {
 ext.ktor_version = '1.4.0'
 
 group 'powerdancer'
-version '0.4'
+version '0.5'
 
 java.targetCompatibility=JavaVersion.VERSION_11
 java.sourceCompatibility=JavaVersion.VERSION_11
