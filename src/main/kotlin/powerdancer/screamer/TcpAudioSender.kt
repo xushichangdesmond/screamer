@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.slf4j.LoggerFactory
 import powerdancer.dsp.filter.AbstractTerminalFilter
+import java.lang.Exception
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
@@ -18,7 +22,6 @@ class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFi
     }
 
     val output: AtomicReference<Socket?> = AtomicReference(null)
-
     var currentFormat: AudioFormat? = null
     var encodedSampleRate: Byte = 0
     var bitSize: Byte = 0
@@ -27,15 +30,17 @@ class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFi
     var connectionJob: Job? = null
 
     override suspend fun onInit() {
-        connectionJob = CoroutineScope(coroutineContext).launch {
+        connectionJob = CoroutineScope(Dispatchers.Default).launch {
             ticker(1000).receiveAsFlow().collect {
                 if (output.get() == null) {
-                    val socket = runCatching {
-                        Socket(host, port)
-                    }.getOrNull()
-                    if (socket != null) {
+                    try {
+                        val socket = Socket()
+                        socket.connect(InetSocketAddress(InetAddress.getByName(host), port), 200)
+                        socket.soTimeout = 1000
                         output.set(socket)
                         logger.info("connected")
+                    } catch (e:Exception) {
+//                        logger.error(e.message, e)
                     }
                 }
             }
