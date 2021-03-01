@@ -8,7 +8,7 @@ import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Mixer
 import javax.sound.sampled.SourceDataLine
 
-class AudioPlayer(val samplesInBuffer: Int, mixerName: String? = null, val configKey: String = "audioPlayer"): AbstractTerminalFilter() {
+class AudioPlayer(var samplesInBuffer: Int, mixerName: String? = null, val configKey: String = "audioPlayer"): AbstractTerminalFilter() {
     companion object {
         val logger = LoggerFactory.getLogger(AudioPlayer::class.java)
     }
@@ -31,8 +31,7 @@ class AudioPlayer(val samplesInBuffer: Int, mixerName: String? = null, val confi
         }
         output = AudioSystem.getSourceDataLine(format, mixer).apply {
             if (playing) {
-                open(format, format.channels * ((format.sampleSizeInBits + 7) / 8) * samplesInBuffer)
-                start()
+                open()
             }
         }
         logger.info(format.toString())
@@ -59,11 +58,19 @@ class AudioPlayer(val samplesInBuffer: Int, mixerName: String? = null, val confi
                     onClose()
                 }
                 "play" -> {
-                    playing = true
-                    output!!.open(format, format.channels * ((format.sampleSizeInBits + 7) / 8) * samplesInBuffer)
-                    output!!.start()
+                    open()
                 }
             }
+        } else if (key == configKey + ".buffer") {
+            samplesInBuffer = value.toInt()
+            open()
+        }
+    }
+    fun open() {
+        runCatching {
+            output!!.open(format, format.channels * ((format.sampleSizeInBits + 7) / 8) * samplesInBuffer)
+            output!!.start()
+            playing = true
         }
     }
 }

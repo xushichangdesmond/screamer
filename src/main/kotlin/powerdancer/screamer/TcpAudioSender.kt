@@ -48,6 +48,7 @@ class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFi
     }
 
     override suspend fun onFormatChange(format: AudioFormat) {
+        if (logger.isDebugEnabled) logger.debug("formatChanged {}", format)
         bitSize = format.sampleSizeInBits.toByte()
         channels = format.channels.toByte()
         encodedSampleRate = ScreamUtils.encodeSampleRate(format.sampleRate.toInt())
@@ -55,8 +56,10 @@ class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFi
 
     override suspend fun onPcmData(b: ByteBuffer) {
         val payloadSize = b.remaining() + 5
+        if (logger.isDebugEnabled) logger.debug("payloadSize {}", payloadSize)
         output.get()?.getOutputStream()?.let {
             runCatching {
+                if (logger.isDebugEnabled) logger.debug("sending to {}", host)
                 it.write(
                     byteArrayOf(
                         (payloadSize ushr 8).toByte(),
@@ -69,7 +72,10 @@ class TcpAudioSender(val host: String, val port: Int = 6789): AbstractTerminalFi
                     )
                 )
 
+                if (logger.isDebugEnabled) logger.debug("sent header to {}", host)
+
                 it.write(b.array(), b.position(), b.remaining())
+                if (logger.isDebugEnabled) logger.debug("sent payload to {}", host)
             }.getOrElse {
                 output.set(null)
                 logger.error(it.message, it)

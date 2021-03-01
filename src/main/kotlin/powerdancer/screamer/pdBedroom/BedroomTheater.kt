@@ -25,7 +25,7 @@ object BedroomTheater {
                     ),
                     LowPassFilter(80, IntPredicate { i -> i == 1 }),
                     HighPassFilter(80, IntPredicate { i -> i == 0 }),
-                    VolumeMultiplier(doubleArrayOf(0.05, 0.4)),
+                    VolumeMultiplier(doubleArrayOf(0.05, 0.05)),
                     FromFloat64Converter(4),
                     TcpAudioSender("192.168.1.91")
                 ),
@@ -40,14 +40,14 @@ object BedroomTheater {
                     TcpAudioSender("192.168.1.89")
                 ),
                 //center
-                arrayOf(
-                    FromFloat64Converter(2),
-                    VolumeMultiplier(doubleArrayOf(0.5, 0.5), "centerVol"),
-                    AudioPlayer(
-                        2048,
-                        "Laser Proj (NVIDIA High Definition Audio)"
-                    )
-                )
+//                arrayOf(
+//                    FromFloat64Converter(2),
+//                    VolumeMultiplier(doubleArrayOf(0.5, 0.5), "centerVol"),
+//                    AudioPlayer(
+//                        2048,
+//                        "Laser Proj (NVIDIA High Definition Audio)"
+//                    )
+//                )
             )
 
         )
